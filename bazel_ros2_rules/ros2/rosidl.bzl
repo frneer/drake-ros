@@ -780,7 +780,10 @@ def rosidl_py_library(
         deps = c_deps + [
             _make_private_label(dep, "_c")
             for dep in py_deps
-        ] + ["@python_dev//:libs"],
+        ] + [
+            "@python_dev//:libs",
+            "@python_dev//:numpy_libs"
+            ],
         **kwargs
     )
 
@@ -791,6 +794,7 @@ def rosidl_py_library(
         REPOSITORY_ROOT + ":rosidl_typesupport_c_cc",
         REPOSITORY_ROOT + ":rosidl_typesupport_interface_cc",
         "@python_dev//:libs",
+        "@python_dev//:numpy_libs",
     ]
     py_data = []
     for typesupport_name, typesupport_library in typesupports.items():
@@ -1333,8 +1337,8 @@ def rosidl_cc_support(
         name = _make_private_name(name, "__rosidl_cpp"),
         group = group or name,
         interfaces = interfaces,
-        includes = [_make_public_label(dep, "_defs") for dep in deps],
-        deps = [_make_public_label(dep, "_cc") for dep in deps],
+        includes = [_make_public_label(dep, "_defs") for dep in deps if not dep.endswith("_c")],
+        deps = [_make_public_label(dep, "_cc") for dep in deps if not dep.endswith("_c")],
         cc_library_rule = cc_library_rule,
         **kwargs
     )
@@ -1353,10 +1357,12 @@ def rosidl_cc_support(
             ),
             group = group or name,
             interfaces = interfaces,
-            includes = [_make_public_label(dep, "_defs") for dep in deps],
-            deps = [_make_private_label(name, "__rosidl_cpp")] + [
+            includes = [_make_public_label(dep, "_defs") for dep in deps if not dep.endswith("_c")],
+            deps = [
+                _make_private_label(name, "__rosidl_c"),
+                _make_private_label(name, "__rosidl_cpp")] + [
                 _make_public_label(dep, "_cc")
-                for dep in deps
+                for dep in deps if not dep.endswith("_c")
             ],
             cc_binary_rule = cc_binary_rule,
             cc_library_rule = cc_library_rule,
@@ -1387,10 +1393,12 @@ def rosidl_cc_support(
             ),
             group = group or name,
             interfaces = interfaces,
-            includes = [_make_public_label(dep, "_defs") for dep in deps],
-            deps = [_make_private_label(name, "__rosidl_cpp")] + [
+            includes = [_make_public_label(dep, "_defs") for dep in deps if not dep.endswith("_c")],
+            deps = [
+                _make_private_label(name, "__rosidl_c"),
+                _make_private_label(name, "__rosidl_cpp")] + [
                 _make_public_label(dep, "_cc")
-                for dep in deps
+                for dep in deps if not dep.endswith("_c")
             ],
             cc_binary_rule = cc_binary_rule,
             cc_library_rule = cc_library_rule,
@@ -1418,10 +1426,10 @@ def rosidl_cc_support(
         typesupports = typesupports,
         group = group or name,
         interfaces = interfaces,
-        includes = [_make_public_label(dep, "_defs") for dep in deps],
-        deps = [_make_private_label(name, "__rosidl_cpp")] + [
+        includes = [_make_public_label(dep, "_defs") for dep in deps if not dep.endswith("_c")],
+        deps = [_make_private_label(name, "__rosidl_c"), _make_private_label(name, "__rosidl_cpp")] + [
             _make_public_label(dep, "_cc")
-            for dep in deps
+            for dep in deps if not dep.endswith("_c")
         ],
         cc_binary_rule = cc_binary_rule,
         **kwargs
@@ -1481,6 +1489,51 @@ def rosidl_py_support(
 
     Additional keyword arguments are those common to all rules.
     """
+    data = list(data)
+    typesupports = {}
+
+    if "rosidl_typesupport_introspection_c" in AVAILABLE_TYPESUPPORT_LIST:
+        data += [name + "_symlink_introspection_c"]
+        typesupports["rosidl_typesupport_introspection_c"] = \
+            _make_public_label(name, "__rosidl_typesupport_introspection_c")
+
+    if "rosidl_typesupport_fastrtps_c" in AVAILABLE_TYPESUPPORT_LIST:
+        data += [name + "_symlink_fastrtps_c"]
+        typesupports["rosidl_typesupport_fastrtps_c"] = \
+            _make_public_label(name, "__rosidl_typesupport_fastrtps_c")
+
+    data += [name + "_symlink_typesupport_c"]
+    typesupports["rosidl_typesupport_c"] = \
+        _make_public_label(name, "__rosidl_typesupport_c")
+
+    rosidl_py_library(
+        name = _make_public_name(name, "_py"),
+        typesupports = typesupports,
+        group = group or name,
+        interfaces = interfaces,
+        includes = [_make_public_label(dep, "_defs") for dep in deps],
+        data = data,
+        py_deps = [_make_public_label(dep, "_py") for dep in deps],
+        c_deps = [_make_public_label(name, "_c")] + [
+            _make_public_label(dep, "_c")
+            for dep in deps
+        ],
+        cc_binary_rule = cc_binary_rule,
+        cc_library_rule = cc_library_rule,
+        py_library_rule = py_library_rule,
+        **kwargs
+    )
+
+def rosidl_c_support(
+        name,
+        interfaces,
+        data,
+        deps,
+        group = None,
+        cc_binary_rule = native.cc_binary,
+        cc_library_rule = native.cc_library,
+        **kwargs):
+
     rosidl_c_library(
         name = _make_private_name(name, "__rosidl_c"),
         group = group or name,
@@ -1529,7 +1582,6 @@ def rosidl_py_support(
             ),
             **kwargs
         )
-        data += [name + "_symlink_introspection_c"]
 
     if "rosidl_typesupport_fastrtps_c" in AVAILABLE_TYPESUPPORT_LIST:
         rosidl_typesupport_fastrtps_c_library(
@@ -1563,7 +1615,6 @@ def rosidl_py_support(
             ),
             **kwargs
         )
-        data += [name + "_symlink_fastrtps_c"]
 
     rosidl_typesupport_c_library(
         name = _make_public_name(name, "__rosidl_typesupport_c"),
@@ -1593,7 +1644,6 @@ def rosidl_py_support(
         ),
         **kwargs
     )
-    data += [name + "_symlink_typesupport_c"]
 
     cc_library_rule(
         name = _make_public_name(name, "_c"),
@@ -1602,24 +1652,6 @@ def rosidl_py_support(
             _make_private_label(name, "__rosidl_c"),
         ] + typesupports.values(),
         linkstatic = True,
-        **kwargs
-    )
-
-    rosidl_py_library(
-        name = _make_public_name(name, "_py"),
-        typesupports = typesupports,
-        group = group or name,
-        interfaces = interfaces,
-        includes = [_make_public_label(dep, "_defs") for dep in deps],
-        data = data,
-        py_deps = [_make_public_label(dep, "_py") for dep in deps],
-        c_deps = [_make_public_label(name, "_c")] + [
-            _make_public_label(dep, "_c")
-            for dep in deps
-        ],
-        cc_binary_rule = cc_binary_rule,
-        cc_library_rule = cc_library_rule,
-        py_library_rule = py_library_rule,
         **kwargs
     )
 
@@ -1676,6 +1708,18 @@ def rosidl_interfaces_group(
         group = group or name,
         interfaces = interfaces,
         includes = [_make_public_label(dep, "_defs") for dep in deps],
+        **kwargs
+    )
+    # NOTE(frneer): First generate rosidl_c targets
+    # Since both cc and py targets depend on it
+    rosidl_c_support(
+        name,
+        interfaces = interfaces,
+        data = data,
+        deps = deps,
+        group = group,
+        cc_binary_rule = cc_binary_rule,
+        cc_library_rule = cc_library_rule,
         **kwargs
     )
 
