@@ -1429,6 +1429,16 @@ def rosidl_cc_support(
         )
         data += [name + "_symlink_fastrtps_cpp"]
 
+    if "rosidl_typesupport_introspection_c" in AVAILABLE_TYPESUPPORT_LIST:
+        data += [name + "_symlink_introspection_c"]
+        typesupports["rosidl_typesupport_introspection_c"] = \
+            _make_public_label(name, "__rosidl_typesupport_introspection_c")
+
+    if "rosidl_typesupport_fastrtps_c" in AVAILABLE_TYPESUPPORT_LIST:
+        data += [name + "_symlink_fastrtps_c"]
+        typesupports["rosidl_typesupport_fastrtps_c"] = \
+            _make_public_label(name, "__rosidl_typesupport_fastrtps_c")
+
     rosidl_typesupport_cc_library(
         name = _make_public_name(name, "__rosidl_typesupport_cpp"),
         typesupports = typesupports,
@@ -1442,6 +1452,9 @@ def rosidl_cc_support(
         cc_binary_rule = cc_binary_rule,
         **kwargs
     )
+    data += [name + "_symlink_typesupport_c"]
+    typesupports["rosidl_typesupport_c"] = \
+        _make_public_label(name, "__rosidl_typesupport_c")
 
     _symlink_typesupport_workaround_issue311(
         name = name + "_symlink_typesupport_cpp",
