@@ -467,12 +467,13 @@ def rosidl_definitions_filegroup(name, group, interfaces, includes, **kwargs):
     translated_interfaces = []
     for ifc in interfaces:
         base, _, ext = ifc.rpartition(".")
-        translated_interfaces.append(base + ".idl")
+        translated_interfaces.append("{}/{}.idl".format(group, base))
     rosidl_translate_genrule(
         name = name + "_translate",
         output_format = "idl",
         translated_interfaces = translated_interfaces,
         group = group,
+        output_dir = group,
         interfaces = interfaces,
         includes = includes,
         **kwargs
@@ -481,13 +482,14 @@ def rosidl_definitions_filegroup(name, group, interfaces, includes, **kwargs):
     interface_hashes = []
     for ifc in translated_interfaces:
         base, _, ext = ifc.rpartition(".")
-        interface_hashes.append(base + ".json")
+        interface_hashes.append("{}.json".format(base))
     rosidl_hash_genrule(
         name = name + "_hash",
         generated_hashes = interface_hashes,
         interfaces = translated_interfaces,
         includes = includes,
         group = group,
+        output_dir = group,
         **kwargs
     )
 
@@ -602,6 +604,12 @@ def rosidl_c_library(
         )
         generated_c_sources.append(
             "{}/{}/detail/{}__functions.c".format(root, parent, basename),
+        )
+        generated_c_sources.append(
+            "{}/{}/detail/{}__type_support.c".format(root, parent, basename),
+        )
+        generated_c_sources.append(
+            "{}/{}/detail/{}__description.c".format(root, parent, basename),
         )
     generated_sources = generated_c_sources + generated_c_headers
 
@@ -1337,8 +1345,8 @@ def rosidl_cc_support(
         name = _make_private_name(name, "__rosidl_cpp"),
         group = group or name,
         interfaces = interfaces,
-        includes = [_make_public_label(dep, "_defs") for dep in deps if not dep.endswith("_c")],
-        deps = [_make_public_label(dep, "_cc") for dep in deps if not dep.endswith("_c")],
+        includes = [_make_public_label(dep, "_defs") for dep in deps],
+        deps = [_make_public_label(dep, "_cc") for dep in deps],
         cc_library_rule = cc_library_rule,
         **kwargs
     )
@@ -1357,12 +1365,12 @@ def rosidl_cc_support(
             ),
             group = group or name,
             interfaces = interfaces,
-            includes = [_make_public_label(dep, "_defs") for dep in deps if not dep.endswith("_c")],
+            includes = [_make_public_label(dep, "_defs") for dep in deps],
             deps = [
                 _make_private_label(name, "__rosidl_c"),
                 _make_private_label(name, "__rosidl_cpp")] + [
                 _make_public_label(dep, "_cc")
-                for dep in deps if not dep.endswith("_c")
+                for dep in deps
             ],
             cc_binary_rule = cc_binary_rule,
             cc_library_rule = cc_library_rule,
@@ -1393,12 +1401,12 @@ def rosidl_cc_support(
             ),
             group = group or name,
             interfaces = interfaces,
-            includes = [_make_public_label(dep, "_defs") for dep in deps if not dep.endswith("_c")],
+            includes = [_make_public_label(dep, "_defs") for dep in deps],
             deps = [
                 _make_private_label(name, "__rosidl_c"),
                 _make_private_label(name, "__rosidl_cpp")] + [
                 _make_public_label(dep, "_cc")
-                for dep in deps if not dep.endswith("_c")
+                for dep in deps
             ],
             cc_binary_rule = cc_binary_rule,
             cc_library_rule = cc_library_rule,
@@ -1426,10 +1434,10 @@ def rosidl_cc_support(
         typesupports = typesupports,
         group = group or name,
         interfaces = interfaces,
-        includes = [_make_public_label(dep, "_defs") for dep in deps if not dep.endswith("_c")],
+        includes = [_make_public_label(dep, "_defs") for dep in deps],
         deps = [_make_private_label(name, "__rosidl_c"), _make_private_label(name, "__rosidl_cpp")] + [
             _make_public_label(dep, "_cc")
-            for dep in deps if not dep.endswith("_c")
+            for dep in deps
         ],
         cc_binary_rule = cc_binary_rule,
         **kwargs
