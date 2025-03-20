@@ -17,7 +17,7 @@ package(default_visibility = ["//visibility:public"])
 cc_library(
   name = "headers",
   hdrs = glob(
-    include = ["include/**/*.*"],
+    include = ["include/cpython/**/*.*"],
     exclude_directories = 1,
   ),
   includes = {},
@@ -32,7 +32,7 @@ cc_library(
 cc_library(
     name = "numpy_headers",
     hdrs = glob(
-        include = ["include/**/*.*"],
+        include = ["include/numpy/**/*.*"],
         exclude_directories = 1,
     ),
     deps = [":headers"],
@@ -91,7 +91,7 @@ def _impl(repo_ctx):
         if not cflag.startswith("-I"):
             continue
         include = cflag[2:]
-        sandboxed_include = "include/{}".format(
+        sandboxed_include = "include/cpython/{}".format(
             include.replace("/", "_"),
         )
         if sandboxed_include in includes:
