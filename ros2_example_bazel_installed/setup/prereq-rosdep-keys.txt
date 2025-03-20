@@ -1,4 +1,4 @@
-benchmark
+assimp
 bullet
 clang-format
 cmake
