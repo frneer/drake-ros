@@ -262,6 +262,9 @@ ros_py_test(
     ],
 )
 
+# TODO(frneer): This test is skipped since it depends on a python library which name
+# Doesn't match the ros2 package name. The current scraping logic
+# doesn't handle this case.
 ros_py_test(
     name = "custom_message_rosbag_test",
     srcs = ["test/custom_message_rosbag_test.py"],
@@ -274,6 +277,8 @@ ros_py_test(
         "@bazel_tools//tools/python/runfiles",
         "@ros2//resources/rmw_isolation:rmw_isolation_py",
     ],
+    # Tag it as manual so it's not run by bazel test //...
+    tags = ["manual"],
 )
 
 # This shows how to ensure a Bazel-provided `ros2` CLI can print out custom
