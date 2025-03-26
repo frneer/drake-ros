@@ -1,5 +1,4 @@
 assimp
-benchmark
 bullet
 cmake
 cppcheck
