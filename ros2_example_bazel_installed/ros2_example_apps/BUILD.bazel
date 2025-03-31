@@ -262,7 +262,6 @@ ros_py_test(
     ],
 )
 
-# TODO(frneer): Remove manual tag when #382 is addressed.
 ros_py_test(
     name = "custom_message_rosbag_test",
     srcs = ["test/custom_message_rosbag_test.py"],
