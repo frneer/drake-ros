@@ -1690,6 +1690,16 @@ def rosidl_interfaces_group(
         **kwargs
     )
 
+    # Add extra deps needed by all targets
+    for dep in [
+        REPOSITORY_ROOT + ":action_msgs",
+        REPOSITORY_ROOT + ":builtin_interfaces",
+        REPOSITORY_ROOT + ":service_msgs",
+        REPOSITORY_ROOT + ":unique_identifier_msgs"
+    ]:
+        if dep not in deps:
+            deps = deps + [dep]
+
     # NOTE(frneer): First generate rosidl_c targets
     # Since both cc and py targets depend on it
     rosidl_c_support(
